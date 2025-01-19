@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @ Maintainer: Happyrobot33
  */
 
@@ -12,77 +12,88 @@ using OpenFlightVRC.Effects;
 // This script is used to initialize the local player's store so it has the correct references
 namespace OpenFlightVRC.Net
 {
-	[UdonBehaviourSyncMode(BehaviourSyncMode.None)]
-	public class PoolController : LoggableUdonSharpBehaviour
-	{
-		public CyanPlayerObjectAssigner Assigner;
-		public AvatarDetection avatarDetection;
-		public WingFlightPlusGlide wingFlightPlusGlide;
-		public OpenFlight openFlight;
-		public ContributerDetection contributerDetection;
+    [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
+    public class PoolController : LoggableUdonSharpBehaviour
+    {
+        public CyanPlayerObjectAssigner Assigner;
+        public AvatarDetection avatarDetection;
+        public WingFlightPlusGlide wingFlightPlusGlide;
+        public OpenFlight openFlight;
+        public ContributerDetection contributerDetection;
 
-		private bool _SFX_OLD = true;
-		public bool SFX = true;
-		private bool _VFX_OLD = true;
-		public bool VFX = true;
+        private bool _SFX_OLD = true;
+        public bool SFX = true;
+        private bool _VFX_OLD = false;
+        public bool VFX = false;
 
-		private float _volume_OLD = 1f;
+        private float _volume_OLD = 1f;
 
-		[Range(0f, 1f)]
-		public float volume = 1f;
+        [Range(0f, 1f)]
+        public float volume = 1f;
 
-		private EffectsHandler[] _effectHandlers = new EffectsHandler[0];
+        private EffectsHandler[] _effectHandlers = new EffectsHandler[0];
 
-		void Update()
-		{
-			//TODO: make this not run every frame, and instead do it on property change
-			//gotta figure out why GetProgramVariable doesnt like propertys
-			if (_SFX_OLD == SFX && _VFX_OLD == VFX && _volume_OLD == volume)
-				return;
+        void Start()
+        {
+            //set the variables of each effect handler
+            foreach (EffectsHandler handler in _effectHandlers)
+            {
+                handler.SFX = SFX;
+                handler.VFX = VFX;
+                handler.volume = volume;
+            }
+        }
 
-			//set the variables of each effect handler
-			foreach (EffectsHandler handler in _effectHandlers)
-			{
-				handler.SFX = SFX;
-				handler.VFX = VFX;
-				handler.volume = volume;
-			}
+        void Update()
+        {
+            //TODO: make this not run every frame, and instead do it on property change
+            //gotta figure out why GetProgramVariable doesnt like propertys
+            if (_SFX_OLD == SFX && _VFX_OLD == VFX && _volume_OLD == volume)
+                return;
 
-			_SFX_OLD = SFX;
-			_VFX_OLD = VFX;
-			_volume_OLD = volume;
-		}
+            //set the variables of each effect handler
+            foreach (EffectsHandler handler in _effectHandlers)
+            {
+                handler.SFX = SFX;
+                handler.VFX = VFX;
+                handler.volume = volume;
+            }
 
-		public void _OnLocalPlayerAssigned()
-		{
-			//get the local player's store
-			Component behaviour = Assigner._GetPlayerPooledUdon(Networking.LocalPlayer);
+            _SFX_OLD = SFX;
+            _VFX_OLD = VFX;
+            _volume_OLD = volume;
+        }
 
-			PlayerInfoStore store = (PlayerInfoStore)behaviour;
+        public void _OnLocalPlayerAssigned()
+        {
+            //get the local player's store
+            Component behaviour = Assigner._GetPlayerPooledUdon(Networking.LocalPlayer);
 
-			//set the values
-			store.AvatarDetection = avatarDetection;
-			store.WingFlightPlusGlide = wingFlightPlusGlide;
-			store.OpenFlight = openFlight;
-			store.ContributerDetection = contributerDetection;
+            PlayerInfoStore store = (PlayerInfoStore)behaviour;
 
-			#region Effects Handler Array Initialization
-			//get every pooled udon object
-			Component[] behaviours = Assigner.pooledUdon;
+            //set the values
+            store.AvatarDetection = avatarDetection;
+            store.WingFlightPlusGlide = wingFlightPlusGlide;
+            store.OpenFlight = openFlight;
+            store.ContributerDetection = contributerDetection;
 
-			//init the effect handlers array
-			_effectHandlers = new EffectsHandler[behaviours.Length];
+            #region Effects Handler Array Initialization
+            //get every pooled udon object
+            Component[] behaviours = Assigner.pooledUdon;
 
-			//loop through each one
-			foreach (Component b in behaviours)
-			{
-				//get effect handler underneath them
-				EffectsHandler handler = b.GetComponentInChildren<EffectsHandler>();
+            //init the effect handlers array
+            _effectHandlers = new EffectsHandler[behaviours.Length];
 
-				//add it to the array
-				_effectHandlers[System.Array.IndexOf(behaviours, b)] = handler;
-			}
-			#endregion
-		}
-	}
+            //loop through each one
+            foreach (Component b in behaviours)
+            {
+                //get effect handler underneath them
+                EffectsHandler handler = b.GetComponentInChildren<EffectsHandler>();
+
+                //add it to the array
+                _effectHandlers[System.Array.IndexOf(behaviours, b)] = handler;
+            }
+            #endregion
+        }
+    }
 }
